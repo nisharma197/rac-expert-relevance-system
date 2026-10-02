@@ -1,0 +1,8 @@
+import type { Expert } from '@/types/expert'
+
+export const experts: Expert[] = [
+  { id: 'e1', name: 'Dr. Arvind Sharma', initials: 'AS', designation: 'Senior Scientist', organization: 'DRDO', qualification: 'Ph.D. Computer Science', experience: 18, expertise: ['Machine Learning', 'Deep Learning', 'Computer Vision', 'Artificial Intelligence'], researchAreas: ['Neural Networks', 'Autonomous Systems', 'Pattern Recognition'], projects: ['Defence Vision Lab', 'Autonomous Threat Detection'], publications: 42 },
+  { id: 'e2', name: 'Dr. Neha Verma', initials: 'NV', designation: 'Principal Researcher', organization: 'IISc Bengaluru', qualification: 'Ph.D. Artificial Intelligence', experience: 14, expertise: ['Deep Learning', 'NLP', 'Neural Networks'], researchAreas: ['Language Models', 'Responsible AI', 'Information Retrieval'], projects: ['Indic Language Models'], publications: 36 },
+  { id: 'e3', name: 'Dr. Rohan Mehta', initials: 'RM', designation: 'Technical Director', organization: 'TechCore Labs', qualification: 'Ph.D. Robotics', experience: 16, expertise: ['Robotics', 'Autonomous Systems', 'AI'], researchAreas: ['Human Robot Interaction', 'Reinforcement Learning'], projects: ['Industrial Autonomy Program'], publications: 28 },
+  { id: 'e4', name: 'Prof. Kavita Rao', initials: 'KR', designation: 'Professor & Dean', organization: 'IIT Hyderabad', qualification: 'Ph.D. Computer Engineering', experience: 22, expertise: ['Computer Vision', 'Image Processing', 'AI'], researchAreas: ['Medical Imaging', 'Visual Computing'], projects: ['Vision for Healthcare'], publications: 61 },
+]
