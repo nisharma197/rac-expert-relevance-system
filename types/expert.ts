@@ -10,6 +10,11 @@ export interface Expert {
   researchAreas: string[]
   projects: string[]
   publications: number
+  skills?: string[]
+  patents?: string[]
+  resumeStatus?: 'Not uploaded' | 'Uploaded' | 'Profile extracted' | 'Reviewed'
+  profileSource?: 'Resume' | 'Manual Entry'
+  domainProfile?: { domain: string; score: number }[]
 }
 
 export type ContextualMatch = {
