@@ -18,3 +18,10 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Uploads
+uploads/
+
+# Python
+__pycache__/
+*.py[cod]
