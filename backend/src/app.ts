@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import healthRouter from './routes/health.routes';
 import expertRouter from './routes/expert.routes';
+import candidateRouter from './routes/candidate.routes';
 
 const app: Application = express();
 
@@ -16,12 +17,16 @@ app.use('/health', healthRouter);
 // Expert API Routes
 app.use('/api/experts', expertRouter);
 
+// Candidate API Routes
+app.use('/api/candidates', candidateRouter);
+
 // Root Endpoint
 app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
     name: 'DRDO RAC Expert Relevance System API',
     version: '0.1.0',
-    documentation: 'GET /health for system health status, /api/experts for expert endpoints'
+    documentation:
+      'GET /health for system health status, /api/experts for expert endpoints, /api/candidates for candidate endpoints'
   });
 });
 
