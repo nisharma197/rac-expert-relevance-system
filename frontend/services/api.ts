@@ -15,50 +15,90 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 /**
  * Maps a backend Expert document to the frontend Expert shape.
  */
-export const mapBackendExpert = (doc: any): Expert => ({
-  id: doc._id || doc.id,
-  name: doc.fullName || doc.name,
-  initials: (doc.fullName || doc.name || 'EX')
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase(),
-  designation: doc.designation || 'Scientist',
-  organization: doc.organization || 'Defence Research and Development Organisation',
-  qualification: doc.education || doc.qualification || 'M.Tech',
-  experience: doc.experienceYears ?? doc.experience ?? 5,
-  expertise: doc.technicalSkills || doc.expertise || [],
-  researchAreas: doc.researchAreas || [],
-  projects: doc.projects || [],
-  publications: Array.isArray(doc.publications) ? doc.publications.length : (doc.publications || 0),
-  skills: doc.technicalSkills || doc.skills || [],
-  resumeStatus: doc.resumeUrl ? 'Profile extracted' : 'Not uploaded',
-  profileSource: doc.resumeUrl ? 'Resume' : 'Manual Entry'
-});
+export const mapBackendExpert = (doc: any): Expert => {
+  const rawId = doc._id || doc.id || '';
+  const id = typeof rawId === 'object' && rawId.toString ? rawId.toString() : String(rawId);
+  const fullName = doc.fullName || doc.name || '';
+  const initials = fullName
+    ? fullName
+        .split(' ')
+        .filter(Boolean)
+        .map((n: string) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'EX';
+
+  const rawSkills = Array.isArray(doc.technicalSkills)
+    ? doc.technicalSkills
+    : Array.isArray(doc.expertise)
+      ? doc.expertise
+      : [];
+  const expertise: string[] = Array.from(new Set<string>(rawSkills.map((s: any) => String(s).trim()))).filter(Boolean);
+
+  const rawResearch = Array.isArray(doc.researchAreas) ? doc.researchAreas : [];
+  const researchAreas: string[] = Array.from(new Set<string>(rawResearch.map((r: any) => String(r).trim()))).filter(Boolean);
+
+  return {
+    id,
+    name: fullName,
+    initials,
+    designation: doc.designation || 'Scientist',
+    organization: doc.organization || 'Defence Research and Development Organisation',
+    qualification: doc.education || doc.qualification || 'M.Tech',
+    experience: doc.experienceYears ?? doc.experience ?? 5,
+    expertise,
+    researchAreas,
+    projects: Array.isArray(doc.projects) ? doc.projects : [],
+    publications: Array.isArray(doc.publications) ? doc.publications.length : (doc.publications || 0),
+    skills: expertise,
+    resumeStatus: doc.resumeUrl ? 'Profile extracted' : 'Not uploaded',
+    profileSource: doc.resumeUrl ? 'Resume' : 'Manual Entry'
+  };
+};
 
 /**
  * Maps a backend Candidate document to the frontend Candidate shape.
  */
-export const mapBackendCandidate = (doc: any): Candidate => ({
-  id: doc._id || doc.id,
-  name: doc.fullName || doc.name,
-  initials: (doc.fullName || doc.name || 'CA')
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase(),
-  qualification: doc.education || doc.qualification || 'B.Tech',
-  expertise: doc.technicalSkills || doc.expertise || [],
-  researchAreas: doc.researchAreas || [],
-  boardId: doc.boardId || '',
-  skills: doc.technicalSkills || doc.skills || [],
-  projects: doc.projects || [],
-  experience: doc.experienceYears ?? doc.experience ?? 0,
-  resumeStatus: doc.resumeUrl ? 'Profile extracted' : 'Not uploaded',
-  profileSource: doc.resumeUrl ? 'Resume' : 'Manual Entry'
-});
+export const mapBackendCandidate = (doc: any): Candidate => {
+  const rawId = doc._id || doc.id || '';
+  const id = typeof rawId === 'object' && rawId.toString ? rawId.toString() : String(rawId);
+  const fullName = doc.fullName || doc.name || '';
+  const initials = fullName
+    ? fullName
+        .split(' ')
+        .filter(Boolean)
+        .map((n: string) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'CA';
+
+  const rawSkills = Array.isArray(doc.technicalSkills)
+    ? doc.technicalSkills
+    : Array.isArray(doc.expertise)
+      ? doc.expertise
+      : [];
+  const expertise: string[] = Array.from(new Set<string>(rawSkills.map((s: any) => String(s).trim()))).filter(Boolean);
+
+  const rawResearch = Array.isArray(doc.researchAreas) ? doc.researchAreas : [];
+  const researchAreas: string[] = Array.from(new Set<string>(rawResearch.map((r: any) => String(r).trim()))).filter(Boolean);
+
+  return {
+    id,
+    name: fullName,
+    initials,
+    qualification: doc.education || doc.qualification || 'B.Tech',
+    expertise,
+    researchAreas,
+    boardId: doc.boardId || '',
+    skills: expertise,
+    projects: Array.isArray(doc.projects) ? doc.projects : [],
+    experience: doc.experienceYears ?? doc.experience ?? 0,
+    resumeStatus: doc.resumeUrl ? 'Profile extracted' : 'Not uploaded',
+    profileSource: doc.resumeUrl ? 'Resume' : 'Manual Entry'
+  };
+};
 
 /**
  * Maps a backend InterviewBoard document to the frontend InterviewBoard shape.
@@ -88,6 +128,23 @@ export async function getExperts(): Promise<Expert[]> {
     return seedExperts;
   } catch {
     return seedExperts;
+  }
+}
+
+/**
+ * Fetches a single expert by MongoDB ID from the backend API.
+ */
+export async function getExpertById(id: string): Promise<Expert | null> {
+  try {
+    const res = await fetch(`${API_BASE}/experts/${id}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.success && json.data) {
+      return mapBackendExpert(json.data);
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
@@ -138,6 +195,23 @@ export async function getCandidates(): Promise<Candidate[]> {
     return seedCandidates;
   } catch {
     return seedCandidates;
+  }
+}
+
+/**
+ * Fetches a single candidate by MongoDB ID from the backend API.
+ */
+export async function getCandidateById(id: string): Promise<Candidate | null> {
+  try {
+    const res = await fetch(`${API_BASE}/candidates/${id}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.success && json.data) {
+      return mapBackendCandidate(json.data);
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
