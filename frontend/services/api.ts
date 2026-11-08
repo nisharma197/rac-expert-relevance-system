@@ -10,7 +10,52 @@ import { experts as seedExperts } from '@/data/experts';
 import { candidates as seedCandidates } from '@/data/candidates';
 import { boards as seedBoards } from '@/data/boards';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://rac-expert-relevance-system-i6ob.vercel.app/api';
+
+export interface BackendHealth {
+  connected: boolean;
+  url: string;
+  latencyMs?: number;
+  message?: string;
+}
+
+/**
+ * Probes the backend API to determine if the live server is reachable.
+ */
+export async function checkBackendHealth(): Promise<BackendHealth> {
+  const start = Date.now();
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(`${API_BASE}/candidates`, {
+      signal: controller.signal,
+      cache: 'no-store'
+    });
+    clearTimeout(timeout);
+    const latencyMs = Date.now() - start;
+    if (res && res.ok) {
+      return {
+        connected: true,
+        url: API_BASE,
+        latencyMs,
+        message: 'Connected to live DRDO RAC backend API'
+      };
+    }
+    return {
+      connected: false,
+      url: API_BASE,
+      latencyMs,
+      message: `Backend returned HTTP ${res?.status || 500} — Resilient offline cache active`
+    };
+  } catch {
+    return {
+      connected: false,
+      url: API_BASE,
+      latencyMs: Date.now() - start,
+      message: 'Backend server currently unreachable — Resilient offline cache active'
+    };
+  }
+}
 
 /**
  * Maps a backend Expert document to the frontend Expert shape.

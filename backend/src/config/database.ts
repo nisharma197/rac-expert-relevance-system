@@ -1,4 +1,11 @@
 import mongoose from 'mongoose';
+import dns from 'node:dns';
+
+try {
+  dns.setServers(['1.1.1.1', '8.8.8.8']);
+} catch {
+  // Ignore in serverless/cloud environments where changing system DNS is restricted
+}
 
 /**
  * Connects to MongoDB Atlas using the connection string from environment variables.
