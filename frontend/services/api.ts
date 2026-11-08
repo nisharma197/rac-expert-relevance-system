@@ -26,11 +26,19 @@ export async function checkBackendHealth(): Promise<BackendHealth> {
   const start = Date.now();
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch(`${API_BASE}/candidates`, {
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    let res = await fetch(`${API_BASE}/health`, {
       signal: controller.signal,
       cache: 'no-store'
-    });
+    }).catch(() => null);
+
+    if (!res || !res.ok) {
+      res = await fetch(`${API_BASE}/candidates`, {
+        signal: controller.signal,
+        cache: 'no-store'
+      }).catch(() => null);
+    }
+
     clearTimeout(timeout);
     const latencyMs = Date.now() - start;
     if (res && res.ok) {
@@ -38,21 +46,21 @@ export async function checkBackendHealth(): Promise<BackendHealth> {
         connected: true,
         url: API_BASE,
         latencyMs,
-        message: 'Connected to live DRDO RAC backend API'
+        message: 'Connected to DRDO RAC backend on port 5000'
       };
     }
     return {
       connected: false,
       url: API_BASE,
       latencyMs,
-      message: `Backend returned HTTP ${res?.status || 500} — Resilient offline cache active`
+      message: `Backend on port 5000 returned HTTP ${res?.status || 500} — Resilient cache active`
     };
   } catch {
     return {
       connected: false,
       url: API_BASE,
       latencyMs: Date.now() - start,
-      message: 'Backend server currently unreachable — Resilient offline cache active'
+      message: 'Backend on port 5000 not reachable — Please ensure `npm run dev` is running in backend/'
     };
   }
 }

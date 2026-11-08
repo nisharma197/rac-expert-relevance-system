@@ -20,6 +20,7 @@ app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 // Health Check Endpoint
 app.use('/health', healthRouter);
+app.use('/api/health', healthRouter);
 
 // Domain API Routes
 app.use('/api/experts', expertRouter);
