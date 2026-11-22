@@ -34,7 +34,19 @@ let boards = [...seedBoards]
 let shortlisted = new Set<string>(['e1'])
 let finalExperts = new Set<string>()
 const cn = (...v: (string | false | undefined)[]) => v.filter(Boolean).join(' ')
-const domains = ['Radar Systems', 'Wireless Communication', 'Aerospace Engineering', 'Missile Technology', 'Rocket Propulsion', 'Electronics Engineering', 'VLSI Design', 'Digital Signal Processing', 'Robotics', 'Embedded Systems', 'Marine Engineering', 'Mechanical Engineering', 'Thermal Engineering', 'Materials Science', 'Metallurgy', 'Composite Materials', 'Nuclear Engineering', 'Electrical Engineering', 'Renewable Energy', 'Control Systems', 'Quantum Technology', 'Photonics', 'Laser Technology', 'Remote Sensing', 'Fluid Mechanics', 'Structural Engineering', 'Chemical Engineering', 'Biotechnology', 'Microelectronics', 'Underwater Acoustics']
+const domains = [
+  'Radar Systems', 'Wireless Communication', 'Aerospace Engineering', 'Missile Technology', 'Rocket Propulsion',
+  'Electronics Engineering', 'VLSI Design', 'Digital Signal Processing', 'Robotics', 'Embedded Systems',
+  'Marine Engineering', 'Mechanical Engineering', 'Thermal Engineering', 'Materials Science', 'Metallurgy',
+  'Composite Materials', 'Nuclear Engineering', 'Electrical Engineering', 'Renewable Energy', 'Control Systems',
+  'Quantum Technology', 'Photonics', 'Laser Technology', 'Remote Sensing', 'Fluid Mechanics',
+  'Structural Engineering', 'Chemical Engineering', 'Biotechnology', 'Microelectronics', 'Underwater Acoustics',
+  'Artificial Intelligence', 'Machine Learning', 'Deep Learning', 'Data Science', 'Natural Language Processing (NLP)',
+  'Computer Vision', 'Generative AI', 'Neural Networks',
+  'Python', 'C', 'C++', 'Java', 'JavaScript', 'TypeScript', 'SQL', 'MATLAB',
+  'Data Structures and Algorithms', 'Software Engineering', 'Database Management Systems', 'Cloud Computing',
+  'Operating Systems', 'Distributed Systems'
+];
 const matches = getMatches()
 
 const nav = [['Workspace', '/workspace'], ['Boards', '/interview-boards'], ['Candidates', '/candidates'], ['Experts', '/experts'], ['Matching', '/matching/setup'], ['Recommendations', '/recommendations'], ['Reports', '/reports']] as const
