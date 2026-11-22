@@ -841,7 +841,149 @@ function ExpertForm() { const router = useRouter(); const [name, setName] = useS
 
 function CandidateForm() { const router = useRouter(); const [name, setName] = useState(''); const [id, setId] = useState(''); const [qualification, setQualification] = useState(''); const [expertise, setExpertise] = useState(''); const [research, setResearch] = useState(''); const [error, setError] = useState(''); const [saving, setSaving] = useState(false); function handleExtracted(profile: any) { if (profile.fullName) setName(profile.fullName); if (profile.education) setQualification(profile.education); if (Array.isArray(profile.technicalSkills) && profile.technicalSkills.length > 0) setExpertise(profile.technicalSkills.join(', ')); if (Array.isArray(profile.researchAreas) && profile.researchAreas.length > 0) setResearch(profile.researchAreas.join(', ')); if (!id) setId(`C-${Math.floor(100 + Math.random() * 900)}`); } async function save(e: FormEvent) { e.preventDefault(); if (!name || !qualification || !expertise) return setError('Complete all required fields.'); setError(''); setSaving(true); const expSkills = expertise.split(',').map(x => x.trim()).filter(Boolean); const resAreas = research.split(',').map(x => x.trim()).filter(Boolean); try { const created = await createCandidateApi({ name, qualification, expertise: expSkills, researchAreas: resAreas }); candidates.unshift(created); router.push(`/candidates/${created.id}`); } catch { const initials = name.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase(); const localId = id || `C-${Date.now()}`; candidates.unshift({ id: localId, name, initials, qualification, expertise: expSkills, researchAreas: resAreas, boardId: '' } as Candidate); router.push(`/candidates/${localId}`); } finally { setSaving(false); } } return <Shell><Header eyebrow="DIRECTORY / NEW CANDIDATE" title="Add candidate" description="Create a profile that can be assigned to an interview board." /><form className="form-panel" onSubmit={save}><ResumeIntelligence kind="candidate" onExtracted={handleExtracted} /><div className="form-grid"><label className="field"><span>Candidate ID *</span><input value={id} onChange={e => setId(e.target.value)} placeholder="e.g. C-008" /></label><label className="field"><span>Name *</span><input value={name} onChange={e => setName(e.target.value)} /></label><label className="field"><span>Qualification *</span><input value={qualification} onChange={e => setQualification(e.target.value)} /></label><label className="field"><span>Areas of expertise * <small>comma separated</small></span><input value={expertise} onChange={e => setExpertise(e.target.value)} /></label><label className="field"><span>Research areas <small>comma separated</small></span><input value={research} onChange={e => setResearch(e.target.value)} /></label></div>{error && <p className="form-error">{error}</p>}<div className="form-actions"><Link className="button outline" href="/candidates">Cancel</Link><button className="button primary" disabled={saving}>{saving ? 'Saving...' : 'Save candidate'} <Check /></button></div></form></Shell> }
 
-function BoardForm() { const router = useRouter(); const [step, setStep] = useState(1); const [name, setName] = useState(''); const [subject, setSubject] = useState(''); const [date, setDate] = useState(''); const [description, setDescription] = useState(''); const [selectedDomains, setSelectedDomains] = useState<string[]>(['Radar Systems', 'Electronics Engineering']); const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]); const [error, setError] = useState(''); const [saving, setSaving] = useState(false); const [candList, setCandList] = useState<Candidate[]>(candidates); useEffect(() => { getCandidates().then(res => { if (res && res.length) { candidates = res; setCandList(res); } }).catch(() => {}); }, []); function next() { if (step === 1 && (!name || !subject || !date)) return setError('Complete board name, subject, and interview date.'); if (step === 2 && !selectedDomains.length) return setError('Select at least one required domain.'); if (step === 3 && !selectedCandidates.length) return setError('Select at least one candidate.'); setError(''); setStep(Math.min(4, step + 1)); } async function create() { setSaving(true); setError(''); try { const created = await createBoardApi({ name, subject, description, domains: selectedDomains, candidateIds: selectedCandidates }); boards.unshift(created); router.push(`/interview-boards/${created.id}`); } catch { const id = `board-${Date.now()}`; boards.unshift({ id, name, subject, description, date: date || '18 Oct 2026', status: 'Ready', domains: selectedDomains, candidateIds: selectedCandidates } as InterviewBoard); router.push(`/interview-boards/${id}`); } finally { setSaving(false); } } return <Shell><Workflow active={step} /><Header eyebrow={`WORKSPACE / NEW BOARD / STEP 0${step}`} title="Create interview board" description="Build the board context before running expert matching." /><section className="form-panel wizard">{step === 1 && <div className="form-grid"><label className="field"><span>Board name *</span><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. AI & Machine Learning" /></label><label className="field"><span>Interview subject *</span><input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Artificial Intelligence" /></label><label className="field"><span>Interview date *</span><input type="date" value={date} onChange={e => setDate(e.target.value)} /></label><label className="field field-wide"><span>Description</span><textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Describe the board purpose and evaluation context." /></label></div>}{step === 2 && <div><h2>Required domains</h2><p className="section-description">Select the domains that define relevance for this board.</p><div className="domain-picker">{domains.map(d => <button type="button" className={cn(selectedDomains.includes(d) && 'selected')} onClick={() => setSelectedDomains(selectedDomains.includes(d) ? selectedDomains.filter(x => x !== d) : [...selectedDomains, d])} key={d}>{selectedDomains.includes(d) && <Check />}{d}</button>)}</div></div>}{step === 3 && <div><h2>Select candidates</h2><p className="section-description">Choose the candidates whose profiles will influence the contextual score.</p><div className="select-list">{candList.map(c => <button type="button" className={cn('select-card', selectedCandidates.includes(c.id) && 'selected')} onClick={() => setSelectedCandidates(selectedCandidates.includes(c.id) ? selectedCandidates.filter(x => x !== c.id) : [...selectedCandidates, c.id])} key={c.id}><Avatar initials={c.initials} /><span><b>{c.name}</b><small>{c.id} · {c.expertise.join(' · ')}</small></span>{selectedCandidates.includes(c.id) && <Check />}</button>)}</div></div>}{step === 4 && <div><h2>Review board</h2><div className="review-grid"><div><small>BOARD</small><b>{name}</b><p>{subject} · {date}</p></div><div><small>REQUIRED DOMAINS</small><div className="chip-row">{selectedDomains.map(d => <span key={d}>{d}</span>)}</div></div><div><small>SELECTED CANDIDATES</small><b>{selectedCandidates.length} profiles</b></div></div></div>}{error && <p className="form-error">{error}</p>}<div className="form-actions">{step > 1 ? <button type="button" className="button outline" onClick={() => setStep(step - 1)}>Back</button> : <Link className="button outline" href="/interview-boards">Cancel</Link>}{step < 4 ? <button type="button" className="button primary" onClick={next}>Continue <ArrowRight /></button> : <button type="button" className="button primary" disabled={saving} onClick={create}>{saving ? 'Creating...' : 'Create interview board'} <Check /></button>}</div></section></Shell> }
+function BoardForm() {
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [subject, setSubject] = useState('');
+  const [date, setDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function create(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !subject.trim() || !date) {
+      return setError('Please complete board name, subject, and interview date.');
+    }
+    if (!selectedDomains.length) {
+      return setError('Please select at least one required technical domain.');
+    }
+    setError('');
+    setSaving(true);
+    try {
+      const created = await createBoardApi({
+        name: name.trim(),
+        subject: subject.trim(),
+        description: description.trim(),
+        domains: selectedDomains,
+        candidateIds: []
+      });
+      boards.unshift(created);
+      setSuccess(true);
+      setTimeout(() => {
+        router.push('/interview-boards');
+      }, 1000);
+    } catch {
+      const id = `board-${Date.now()}`;
+      boards.unshift({
+        id,
+        name: name.trim(),
+        subject: subject.trim(),
+        description: description.trim(),
+        date: date || '18 Oct 2026',
+        status: 'Ready for Matching',
+        domains: selectedDomains,
+        candidateIds: []
+      } as InterviewBoard);
+      setSuccess(true);
+      setTimeout(() => {
+        router.push('/interview-boards');
+      }, 1000);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Shell>
+      <Header
+        eyebrow="WORKSPACE / NEW BOARD"
+        title="Create interview board"
+        description="Configure board details and required technical domains on a single page."
+      />
+      <form className="form-panel" onSubmit={create}>
+        <div className="form-grid">
+          <label className="field">
+            <span>Board name *</span>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Radar Systems & Advanced Sensors Board"
+            />
+          </label>
+          <label className="field">
+            <span>Interview subject *</span>
+            <input
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+              placeholder="e.g. Radar Engineering & Signal Processing"
+            />
+          </label>
+          <label className="field">
+            <span>Interview date *</span>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+            />
+          </label>
+          <label className="field field-wide">
+            <span>Description</span>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Describe the board mandate, evaluation criteria, and technical context."
+            />
+          </label>
+          <div className="field-wide" style={{ marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#3d5066' }}>
+                Required Expertise / Domains *
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+                {selectedDomains.length} domain{selectedDomains.length !== 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <p className="section-description" style={{ marginBottom: 14 }}>
+              Select all relevant technical domains for this interview board. These domains will be used by the matching algorithm to score and rank experts.
+            </p>
+            <div className="domain-picker">
+              {domains.map(d => {
+                const isSelected = selectedDomains.includes(d);
+                return (
+                  <button
+                    type="button"
+                    className={cn(isSelected && 'selected')}
+                    onClick={() => setSelectedDomains(isSelected ? selectedDomains.filter(x => x !== d) : [...selectedDomains, d])}
+                    key={d}
+                  >
+                    {isSelected && <Check />}
+                    {d}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        {error && <p className="form-error">{error}</p>}
+        {success && (
+          <div className="success-note" style={{ marginTop: 16 }}>
+            ✓ Interview board created successfully! Redirecting to boards...
+          </div>
+        )}
+        <div className="form-actions">
+          <Link className="button outline" href="/interview-boards">Cancel</Link>
+          <button type="submit" className="button primary" disabled={saving || success}>
+            {saving ? 'Creating board...' : 'Create interview board'} <Check />
+          </button>
+        </div>
+      </form>
+    </Shell>
+  );
+}
 
 function Setup() { const router = useRouter(); const searchParams = useSearchParams(); const boardId = searchParams.get('board') ?? (boards[0]?.id || 'ai-ml'); const board = boards.find(item => item.id === boardId) ?? boards[0]; const boardCandidates = candidates.filter(candidate => board?.candidateIds?.includes(candidate.id)); return <Shell><Workflow active={4} /><Header eyebrow="AI MATCHING / SETUP" title="AI Expert Matching" description="Find experts whose expertise aligns with the board and candidate profiles." /><div className="setup-grid"><div className="setup-main"><section className="setup-section"><div className="step-label">01 <span>BOARD</span></div><div className="selected-board"><div><Badge>SELECTED BOARD</Badge><h2>{board?.name || 'AI & Machine Learning'}</h2><p>{board?.subject || 'Artificial Intelligence'}</p></div><Link href="/interview-boards">Change <ArrowRight /></Link></div></section><section className="setup-section"><div className="step-label">02 <span>CANDIDATES</span></div><h2>Candidate profiles in this run</h2><p className="section-description">{boardCandidates.length} candidates selected from the interview board.</p><div className="candidate-strip">{boardCandidates.map((c, idx) => <div key={`${c.id}-${idx}`}><Avatar initials={c.initials} /><b>{c.id}</b><small>{c.name}</small></div>)}</div></section><section className="setup-section"><div className="step-label">03 <span>DOMAIN PROFILE</span></div><div className="domain-bars">{(board?.domains?.length ? Array.from(new Set(board.domains)).map((d, idx) => [d, 92 - idx * 8]) : [['Radar Systems', 92], ['Electronics Engineering', 81], ['Missile Technology', 76], ['Aerospace Engineering', 48]]).map(([d, v]: any, idx: number) => <div key={`${d}-${idx}`}><label>{d}<b>{v}%</b></label><Progress value={Number(v)} /></div>)}</div></section><section className="setup-section"><div className="step-label">04 <span>EXPERT POOL</span></div><h2>{experts.length} experts available</h2><p className="section-description">All profiles will be evaluated contextually against this target profile.</p></section></div><aside className="method-panel"><div className="eyebrow">MATCHING METHOD</div><h3>Contextual relevance</h3><p>Scores are calculated using the 5-factor weighted algorithm for this board and its candidates.</p><div className="method-score"><span>Board Subject Alignment</span><b>30%</b></div><div className="method-score"><span>Candidate Expertise Alignment</span><b>30%</b></div><div className="method-score"><span>Research & Domain Alignment</span><b>20%</b></div><div className="method-score"><span>Experience Alignment</span><b>10%</b></div><div className="method-score"><span>Technical Skills Alignment</span><b>10%</b></div><button className="button primary full" onClick={() => router.push(`/matching/analyzing?board=${board?.id || 'ai-ml'}`)}>Run AI matching <BrainCircuit /></button></aside></div></Shell> }
 
